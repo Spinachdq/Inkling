@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>编辑笔记 — 碎片化内容整理</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="page-edit">
+    <header class="edit-header">
+      <a href="index.html" class="back" title="返回">←</a>
+      <input type="text" class="title-input" id="titleInput" placeholder="笔记标题">
+      <button type="button" class="save-btn" id="saveBtn">保存</button>
+    </header>
+
+    <!-- 链导入/文上传 解析后显示的快捷按钮 -->
+    <div class="parsed-actions" id="parsedActions" style="display:none">
+      <button type="button" id="aiOutline">AI 生成大纲</button>
+      <button type="button" id="aiCore">AI 提炼一句话核心</button>
+    </div>
+
+    <div class="edit-body" id="editBody" contenteditable="true"></div>
+
+    <div class="edit-toolbar">
+      <button type="button" data-cmd="bold" title="加粗">B</button>
+      <button type="button" data-cmd="italic" title="斜体">I</button>
+      <button type="button" id="aiOutline2">AI 生成大纲</button>
+      <button type="button" id="aiCore2">AI 提炼核心</button>
+      <button type="button" id="deleteNote">删除笔记</button>
+    </div>
+  </main>
+
+  <div class="confirm-overlay" id="confirmDelete">
+    <div class="confirm-box">
+      <p class="text">确定删除该笔记吗？删除后不可恢复。</p>
+      <div class="btns">
+        <button type="button" class="cancel-btn">取消</button>
+        <button type="button" class="danger confirm-btn">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/edit.js"></script>
+</body>
+</html>

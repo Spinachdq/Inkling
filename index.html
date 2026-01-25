@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>笔落皆所思，寸墨藏山河 — 碎片化内容整理</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="page-home">
+    <!-- 上层：slogan -->
+    <header class="slogan-block">
+      <p class="slogan">笔落皆所思，寸墨藏山河</p>
+    </header>
+
+    <!-- 中层：4 个圆形功能键 -->
+    <nav class="actions-row">
+      <button class="action-btn" data-id="note" title="随手记 — 创建自定义笔记">
+        <span class="icon">✎</span>
+        <span class="label">随手记</span>
+      </button>
+      <button class="action-btn" data-id="link" title="链导入 — 导入外部链接">
+        <span class="icon">🔗</span>
+        <span class="label">链导入</span>
+      </button>
+      <button class="action-btn" data-id="doc" title="文上传 — 导入本地文档">
+        <span class="icon">📄</span>
+        <span class="label">文上传</span>
+      </button>
+      <button class="action-btn" data-id="ai" title="AI创作 — AI 对话与创作">
+        <span class="icon">◇</span>
+        <span class="label">AI创作</span>
+      </button>
+    </nav>
+
+    <!-- 下层：卡片展示区 -->
+    <section class="cards-section">
+      <div class="sort-bar">
+        <span>排序：</span>
+        <button type="button" class="sort-btn active" data-sort="date">按日期</button>
+        <button type="button" class="sort-btn" data-sort="tag">按分类</button>
+      </div>
+
+      <div class="cards-grid" id="cardsGrid"></div>
+      <div class="cards-empty" id="cardsEmpty" style="display:none;">
+        暂无笔记，点击上方功能键开始记录吧
+      </div>
+    </section>
+  </main>
+
+  <!-- 弹窗：链导入 -->
+  <div class="modal-overlay" id="modalLink">
+    <div class="modal">
+      <h3>链导入</h3>
+      <div class="input-wrap">
+        <input type="url" id="linkInput" placeholder="粘贴公众号、小红书、知乎或网页链接">
+        <p class="hint">支持微信公众号、小红书等合规链接</p>
+      </div>
+      <div class="loader-wrap" id="linkLoader">
+        <span class="loader"></span>
+        <span>解析中，请稍候…</span>
+      </div>
+      <div class="btns">
+        <button type="button" class="cancel-btn">取消</button>
+        <button type="button" class="primary parse-btn">解析</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗：文上传 -->
+  <div class="modal-overlay" id="modalDoc">
+    <div class="modal">
+      <h3>文上传</h3>
+      <div class="upload-zone" id="uploadZone">
+        <div class="icon">📁</div>
+        <div class="tip">将 Word、PDF、TXT 文件拖至此处，或点击上传</div>
+      </div>
+      <input type="file" id="fileInput" accept=".doc,.docx,.pdf,.txt" multiple style="display:none">
+      <div class="progress" id="uploadProgress">
+        <div class="bar" id="uploadBar"></div>
+      </div>
+      <p class="hint" style="margin-top:8px">仅支持 Word、PDF、TXT 格式，图片式 PDF 暂不支持</p>
+      <div class="btns" style="margin-top:1rem">
+        <button type="button" class="cancel-btn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认 -->
+  <div class="confirm-overlay" id="confirmDelete">
+    <div class="confirm-box">
+      <p class="text">确定删除该笔记吗？删除后不可恢复。</p>
+      <div class="btns">
+        <button type="button" class="cancel-confirm">取消</button>
+        <button type="button" class="danger confirm-delete">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

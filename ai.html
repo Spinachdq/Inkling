@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI创作 — 碎片化内容整理</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="page-ai">
+    <header class="ai-header">
+      <a href="index.html" class="back" title="返回">←</a>
+      <h1>AI 创作</h1>
+    </header>
+
+    <div class="ai-layout">
+      <aside class="ai-sidebar">
+        <button type="button" class="new-chat">+ 新对话</button>
+        <div id="historyList"></div>
+      </aside>
+
+      <section class="ai-chat">
+        <div class="ai-messages" id="aiMessages"></div>
+        <div class="ai-input-wrap">
+          <textarea id="aiInput" placeholder="请输入你的问题或需求…"></textarea>
+          <div class="send-row">
+            <button type="button" class="send-btn" id="sendBtn">发送</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/ai.js"></script>
+</body>
+</html>
