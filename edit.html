@@ -4,31 +4,140 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>编辑笔记 — 碎片化内容整理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <main class="page-edit">
+    <!-- 装饰背景（Lovable） -->
+    <div class="edit-blobs" aria-hidden="true">
+      <div class="edit-blob edit-blob-terracotta"></div>
+      <div class="edit-blob edit-blob-sage"></div>
+      <div class="edit-blob edit-blob-amber"></div>
+    </div>
+
+    <!-- 顶部栏：返回 + 标题 + 保存 -->
     <header class="edit-header">
-      <a href="index.html" class="back" title="返回">←</a>
-      <input type="text" class="title-input" id="titleInput" placeholder="笔记标题">
-      <button type="button" class="save-btn" id="saveBtn">保存</button>
+      <div class="edit-header-inner">
+        <a href="index.html" class="edit-back" title="返回">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
+        <h1 class="edit-header-title" id="editHeaderTitle">编辑笔记</h1>
+        <div class="edit-save-wrap">
+          <button type="button" class="edit-save-btn" id="saveBtn">
+            <svg class="edit-save-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span class="edit-save-text">保存</span>
+          </button>
+        </div>
+      </div>
     </header>
 
-    <!-- 链导入/文上传 解析后显示的快捷按钮 -->
-    <div class="parsed-actions" id="parsedActions" style="display:none">
-      <button type="button" id="aiOutline">AI 生成大纲</button>
-      <button type="button" id="aiCore">AI 提炼一句话核心</button>
+    <div class="edit-content">
+      <div class="edit-inner">
+        <!-- 标题输入 -->
+        <div class="edit-title-wrap">
+          <input type="text" id="editTitle" class="edit-title-input" placeholder="添加标题..." maxlength="80" />
+          <div class="edit-title-underline"></div>
+        </div>
+
+        <!-- 链导入/文上传 解析后的快捷按钮 -->
+        <div class="parsed-actions" id="parsedActions" style="display:none">
+          <button type="button" class="parsed-btn parsed-btn-outline" id="aiOutline">AI 生成大纲</button>
+          <button type="button" class="parsed-btn parsed-btn-core" id="aiCore">AI 提炼一句话核心</button>
+        </div>
+
+        <!-- 标签编辑区 -->
+        <div class="edit-tags-wrap" id="editTagsWrap">
+          <span class="edit-tags-label">标签</span>
+          <div class="edit-tags-list" id="editTagsList"></div>
+          <button type="button" class="edit-tag-add" id="editTagAdd" title="添加标签（最多 3 个）">+ 添加标签</button>
+        </div>
+
+        <!-- 原文链接卡片（标签下方，仅在有 sourceUrl 时显示） -->
+        <div class="edit-source-wrap" id="editSourceWrap" style="display:none">
+          <a id="editSourceLink" class="edit-source-card" href="#" target="_blank" rel="noopener" title="点击查看原文">
+            <span class="edit-source-card-title" id="editSourceTitle">查看原文</span>
+            <span class="edit-source-card-hint">点击查看原文</span>
+          </a>
+        </div>
+
+        <!-- 正文编辑区 -->
+        <div class="edit-editor-wrap">
+          <div class="edit-body" id="editBody" contenteditable="true" tabindex="0" data-placeholder="在这里记录你的想法..."></div>
+        </div>
+      </div>
     </div>
 
-    <div class="edit-body" id="editBody" contenteditable="true"></div>
+    <!-- 底部工具栏（Lovable 风格） -->
+    <footer class="edit-toolbar">
+      <div class="edit-toolbar-inner">
+        <!-- AI 工具行 -->
+        <div class="edit-toolbar-ai">
+          <button type="button" class="edit-ai-pill edit-ai-pill-sage" id="aiOutline2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>AI 生成大纲</span>
+          </button>
+          <button type="button" class="edit-ai-pill edit-ai-pill-terracotta" id="aiCore2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>AI 提炼核心</span>
+          </button>
+        </div>
 
-    <div class="edit-toolbar">
-      <button type="button" data-cmd="bold" title="加粗">B</button>
-      <button type="button" data-cmd="italic" title="斜体">I</button>
-      <button type="button" id="aiOutline2">AI 生成大纲</button>
-      <button type="button" id="aiCore2">AI 提炼核心</button>
-      <button type="button" id="deleteNote">删除笔记</button>
-    </div>
+        <!-- 格式工具行 -->
+        <div class="edit-toolbar-format">
+          <div class="edit-toolbar-group">
+            <button type="button" data-cmd="bold" title="加粗"><b>B</b></button>
+            <button type="button" data-cmd="italic" title="斜体"><i>I</i></button>
+            <button type="button" data-cmd="underline" title="下划线"><u>U</u></button>
+            <button type="button" data-cmd="strikeThrough" title="删除线"><s>S</s></button>
+          </div>
+          <span class="edit-toolbar-sep"></span>
+          <div class="edit-toolbar-group">
+            <button type="button" data-cmd="justifyLeft" title="左对齐">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="21" y1="6" x2="3" y2="6"/><line x1="15" y1="12" x2="3" y2="12"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+            </button>
+            <button type="button" data-cmd="justifyCenter" title="居中">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="21" y1="6" x2="3" y2="6"/><line x1="17" y1="12" x2="7" y2="12"/><line x1="19" y1="18" x2="5" y2="18"/></svg>
+            </button>
+            <button type="button" data-cmd="justifyRight" title="右对齐">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="9" y2="12"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+            </button>
+            <button type="button" data-cmd="justifyFull" title="两端对齐">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="3" y2="12"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+            </button>
+          </div>
+          <span class="edit-toolbar-sep"></span>
+          <div class="edit-toolbar-group">
+            <button type="button" id="btnTextColor" title="字体颜色">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="13.5" cy="6.5" r="1.5"/><path d="M10 20V8l4-2 4 2v12M6 20v-4M18 20v-4"/></svg>
+            </button>
+            <input type="color" id="inputTextColor" value="#2d2d2d" class="edit-toolbar-color" aria-hidden="true">
+            <button type="button" id="btnBgColor" title="背景颜色">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20h16M6 16v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/><path d="M6 8h12"/></svg>
+            </button>
+            <input type="color" id="inputBgColor" value="#fef9c3" class="edit-toolbar-color" aria-hidden="true">
+          </div>
+          <span class="edit-toolbar-sep"></span>
+          <div class="edit-toolbar-actions">
+            <button type="button" class="edit-toolbar-btn edit-toolbar-btn-secondary" id="btnInsertImage" title="插入图片">
+              <span class="edit-toolbar-btn-label">图片</span>
+            </button>
+            <input type="file" id="inputImage" accept="image/*" class="edit-toolbar-file" aria-hidden="true" tabindex="-1">
+            <button type="button" class="edit-toolbar-btn edit-toolbar-btn-secondary" id="btnInsertVideo" title="插入视频（本地）">
+              <span class="edit-toolbar-btn-label">视频</span>
+            </button>
+            <input type="file" id="inputVideo" accept="video/*" class="edit-toolbar-file" aria-hidden="true" tabindex="-1">
+            <button type="button" class="edit-toolbar-btn edit-toolbar-btn-secondary" id="btnInsertVideoUrl" title="插入视频（链接）">
+              <span class="edit-toolbar-btn-label">链接</span>
+            </button>
+            <button type="button" class="edit-toolbar-btn edit-toolbar-btn-danger" id="deleteNote" title="删除笔记">删除</button>
+          </div>
+        </div>
+      </div>
+    </footer>
   </main>
 
   <div class="confirm-overlay" id="confirmDelete">
@@ -43,6 +152,8 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="config.js"></script>
+  <script src="js/ai-service.js"></script>
   <script src="js/edit.js"></script>
 </body>
 </html>

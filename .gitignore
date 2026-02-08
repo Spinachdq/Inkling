@@ -19,3 +19,6 @@ Thumbs.db
 # 本地环境（若有）
 .env
 .env.local
+
+# AI 配置（包含 API Key，不要提交）
+config.js
