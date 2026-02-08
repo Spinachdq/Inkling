@@ -20,5 +20,5 @@ Thumbs.db
 .env
 .env.local
 
-# AI 配置（包含 API Key，不要提交）
-config.js
+# AI 配置（包含 API Key，不要提交；仅忽略根目录的 config.js）
+/config.js
