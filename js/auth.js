@@ -191,12 +191,14 @@
     var container = document.getElementById('userMenuContainer');
     var topBar = container && container.closest('.top-bar');
     if (!container) return;
+    if (topBar) topBar.classList.remove('top-bar-hidden');
     if (!isAuthEnabled()) {
-      container.innerHTML = '';
-      if (topBar) topBar.classList.add('top-bar-hidden');
+      /* 未配置 Supabase 时仍显示登录入口，点击后弹窗内会提示「未配置登录」 */
+      container.innerHTML = '<button type="button" class="user-menu-login-btn" id="userMenuLoginBtn">登录</button>';
+      var btn = document.getElementById('userMenuLoginBtn');
+      if (btn) btn.addEventListener('click', function () { openLoginModal('登录后可永久保存笔记并同步至所有设备'); });
       return;
     }
-    if (topBar) topBar.classList.remove('top-bar-hidden');
     if (currentUser) {
       var avatar = (currentUser.user_metadata && (currentUser.user_metadata.avatar_url || currentUser.user_metadata.picture)) || '';
       var name = (currentUser.user_metadata && (currentUser.user_metadata.full_name || currentUser.user_metadata.name)) || (currentUser.email && currentUser.email.split('@')[0]) || '用户';

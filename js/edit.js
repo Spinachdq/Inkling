@@ -689,7 +689,8 @@
 
     function doSave(aiCoreResult, tagResult) {
       var coreVal = titleInputTrimmed ? titleInputTrimmed.slice(0, 300) : ((typeof aiCoreResult === 'string' && aiCoreResult.trim()) ? aiCoreResult.trim() : (note && note.core) || text.slice(0, 80) || title);
-      var finalTags = tagsDirty ? editPageTags.slice(0, 3) : (tagResult && tagResult.tags && tagResult.tags.length) ? tagResult.tags : (note && note.tags) || ['未分类'];
+      /* 优先：用户改过用编辑区；否则 AI 结果；否则已有笔记的 tags；否则链导入/文上传预填的 editPageTags（线上 AI 失败时保留解析时的标签） */
+      var finalTags = tagsDirty ? editPageTags.slice(0, 3) : (tagResult && tagResult.tags && tagResult.tags.length) ? tagResult.tags : (note && note.tags && note.tags.length) ? note.tags : (editPageTags.length ? editPageTags.slice(0, 3) : ['未分类']);
       var parentFromUi = editParentCategoryEl && editParentCategoryEl.value ? editParentCategoryEl.value.trim() : '';
       var finalParent = (typeof window.normalizeParentCategory === 'function')
         ? window.normalizeParentCategory(parentFromUi || (tagResult && tagResult.parent_category) || (note && note.parent_category) || '')
