@@ -37,9 +37,9 @@
 
     <div class="edit-content">
       <div class="edit-inner">
-        <!-- 标题输入 -->
+        <!-- 标题输入：多行自适应，完整展示 AI 长句标题 -->
         <div class="edit-title-wrap">
-          <input type="text" id="editTitle" class="edit-title-input" placeholder="添加标题..." maxlength="80" />
+          <textarea id="editTitle" class="edit-title-input" rows="1" placeholder="添加标题..." maxlength="300"></textarea>
           <div class="edit-title-underline"></div>
         </div>
 
@@ -54,6 +54,12 @@
           <span class="edit-tags-label">标签</span>
           <div class="edit-tags-list" id="editTagsList"></div>
           <button type="button" class="edit-tag-add" id="editTagAdd" title="添加标签（最多 3 个）">+ 添加标签</button>
+        </div>
+
+        <!-- 标准分类（选一） -->
+        <div class="edit-category-wrap" id="editCategoryWrap">
+          <span class="edit-tags-label">分类</span>
+          <select id="editParentCategory" class="edit-category-select" title="从标准分类中选一"></select>
         </div>
 
         <!-- 原文链接卡片（标签下方，仅在有 sourceUrl 时显示） -->
@@ -110,15 +116,47 @@
             </button>
           </div>
           <span class="edit-toolbar-sep"></span>
-          <div class="edit-toolbar-group">
-            <button type="button" id="btnTextColor" title="字体颜色">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="13.5" cy="6.5" r="1.5"/><path d="M10 20V8l4-2 4 2v12M6 20v-4M18 20v-4"/></svg>
-            </button>
-            <input type="color" id="inputTextColor" value="#2d2d2d" class="edit-toolbar-color" aria-hidden="true">
-            <button type="button" id="btnBgColor" title="背景颜色">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20h16M6 16v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/><path d="M6 8h12"/></svg>
-            </button>
-            <input type="color" id="inputBgColor" value="#fef9c3" class="edit-toolbar-color" aria-hidden="true">
+          <div class="edit-toolbar-group edit-toolbar-color-wrap">
+            <div class="edit-color-trigger-wrap">
+              <button type="button" id="btnTextColor" title="字体颜色" aria-haspopup="true" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.75-.2 2.5-.5"/><path d="M22 12c0-5.5-4.5-10-10-10"/><path d="M12 2v4"/><path d="M2 12h4"/><path d="M20 12h-4"/><path d="M12 22v-4"/></svg>
+              </button>
+              <div id="popoverTextColor" class="edit-color-popover" role="dialog" aria-label="字体颜色" hidden>
+                <p class="edit-color-popover-title">默认颜色</p>
+                <div id="textColorPresets" class="edit-color-grid"></div>
+                <div id="textColorRecentWrap" class="edit-color-recent-wrap" hidden>
+                  <div class="edit-color-divider"></div>
+                  <p class="edit-color-popover-title">常用颜色</p>
+                  <div id="textColorRecent" class="edit-color-grid edit-color-recent-grid"></div>
+                </div>
+                <div class="edit-color-divider"></div>
+                <p class="edit-color-popover-title">自定义颜色</p>
+                <div class="edit-color-custom-row">
+                  <input type="color" id="inputTextColorCustom" value="#2d2d2d" title="自定义字体颜色">
+                  <button type="button" class="edit-color-confirm-btn" id="btnTextColorConfirm">确定</button>
+                </div>
+              </div>
+            </div>
+            <div class="edit-color-trigger-wrap">
+              <button type="button" id="btnBgColor" title="背景颜色" aria-haspopup="true" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+              </button>
+              <div id="popoverBgColor" class="edit-color-popover" role="dialog" aria-label="背景颜色" hidden>
+                <p class="edit-color-popover-title">默认颜色</p>
+                <div id="bgColorPresets" class="edit-color-grid"></div>
+                <div id="bgColorRecentWrap" class="edit-color-recent-wrap" hidden>
+                  <div class="edit-color-divider"></div>
+                  <p class="edit-color-popover-title">常用颜色</p>
+                  <div id="bgColorRecent" class="edit-color-grid edit-color-recent-grid"></div>
+                </div>
+                <div class="edit-color-divider"></div>
+                <p class="edit-color-popover-title">自定义颜色</p>
+                <div class="edit-color-custom-row">
+                  <input type="color" id="inputBgColorCustom" value="#fef9c3" title="自定义背景颜色">
+                  <button type="button" class="edit-color-confirm-btn" id="btnBgColorConfirm">确定</button>
+                </div>
+              </div>
+            </div>
           </div>
           <span class="edit-toolbar-sep"></span>
           <div class="edit-toolbar-actions">
@@ -152,7 +190,63 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- 文件预览弹窗（文上传来源：PDF/Word 预览） -->
+  <div class="file-preview-overlay" id="filePreviewModal" aria-hidden="true">
+    <div class="file-preview-box">
+      <div class="file-preview-header">
+        <span class="file-preview-title" id="filePreviewTitle">原文件</span>
+        <button type="button" class="file-preview-close" id="filePreviewClose" aria-label="关闭">×</button>
+      </div>
+      <div class="file-preview-body">
+        <iframe id="filePreviewIframe" class="file-preview-iframe" title="文件预览"></iframe>
+        <div id="filePreviewFallback" class="file-preview-fallback" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录弹窗（与首页一致，用于保存时提示登录） -->
+  <div class="modal-overlay modal-login" id="loginModal">
+    <div class="modal modal-login-box">
+      <button type="button" class="modal-close" data-login-close aria-label="关闭">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h3 class="modal-login-title">登录你的知识图谱</h3>
+      <p class="modal-login-desc" id="loginModalDesc">登录后即可将此笔记永久存入你的知识图谱</p>
+      <div id="loginViewOptions" class="login-view">
+        <button type="button" class="btn-login-option" id="loginBtnGoogle">
+          <svg class="btn-login-google-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          使用 Google 账号登录
+        </button>
+        <button type="button" class="btn-login-option" id="loginBtnEmail">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          使用邮箱登录
+        </button>
+      </div>
+      <div id="loginViewEmail" class="login-view" style="display:none">
+        <form id="loginEmailForm" class="login-email-form">
+          <label class="login-label">邮箱</label>
+          <input type="email" id="loginEmailInput" class="login-input" placeholder="your@email.com" required />
+          <label class="login-label">密码</label>
+          <input type="password" id="loginPasswordInput" class="login-input" placeholder="至少 6 位" required minlength="6" />
+          <button type="submit" class="btn-login-submit" id="loginFormSubmit" data-mode="login">登录</button>
+          <p class="login-toggle-wrap"><span id="loginToggleHint">还没有账号？</span> <a href="#" id="loginToggleSignup">注册</a></p>
+        </form>
+        <button type="button" class="login-back" id="loginBackToOptions">← 返回其他登录方式</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="config.js"></script>
+  <script src="js/categories.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/file-preview.js"></script>
   <script src="js/ai-service.js"></script>
   <script src="js/edit.js"></script>
 </body>

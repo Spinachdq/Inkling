@@ -37,7 +37,23 @@
 | **卡片区** | 按日期/分类排序，点击进详情，hover 显示快捷编辑、删除 |
 | **编辑页** | 标题、正文、工具栏（加粗、斜体、AI 大纲、AI 核心）、删除，约 30 秒自动存草稿 |
 
-数据保存在浏览器 `localStorage`，关闭或清空数据后会重置；链接解析、文档解析、AI 能力为**前端模拟**，真实产品需接入后端与 AI 服务。
+数据保存在浏览器 `localStorage`，关闭或清空数据后会重置。链接解析与 AI 总结：本地可通过 `config.js` + `python server.py` 使用；**线上部署（如 Vercel）** 见下。
+
+---
+
+## 线上部署（Vercel）与 AI 配置
+
+部署到 Vercel 后，**链解析** 等 AI 功能需在服务端配置 API Key（不写进前端代码，更安全）：
+
+1. 打开 Vercel 项目 → **Settings** → **Environment Variables**。
+2. 新增变量（任选一种 AI 服务即可）：
+   - **USE_AI**：`openai` / `qwen` / `zhipu`（与下面 Key 对应）
+   - **OPENAI_API_KEY**：若 `USE_AI=openai`，填 OpenAI API Key
+   - **DASHSCOPE_API_KEY**：若 `USE_AI=qwen`，填阿里云通义千问 Key
+   - **ZHIPU_API_KEY**：若 `USE_AI=zhipu`，填智谱 AI Key
+3. 保存后重新 **Redeploy** 一次。
+
+项目中的 `api/config.js`、`api/proxy.js`、`api/fetch-page.js` 会在服务端读取上述环境变量并完成抓页与 AI 调用，前端不会接触 API Key。
 
 ---
 

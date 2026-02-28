@@ -34,11 +34,12 @@ var CONFIG = {
   useAI: 'qwen',
   
   // 网页内容提取服务（可选，用于先提取网页正文，再交给 AI）
-  // 如果不需要，可以留空，直接让 AI 处理 URL
-  extractor: {
-    // 使用 Readability API（免费，但需要后端代理）
-    // 或使用其他网页提取服务
-    enabled: false,
-    apiURL: ''
+  extractor: { enabled: false, apiURL: '' },
+
+  // 登录鉴权（Supabase）：未配置时视为「无鉴权」
+  // 在 Supabase 控制台 → API Keys 拿到 anon public，Data API 拿到 Project URL
+  supabase: {
+    url: '',      // 如：https://xxxx.supabase.co
+    anonKey: ''   // 如：eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   }
 };
