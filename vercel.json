@@ -6,6 +6,7 @@
     "api/config.js": { "memory": 128 },
     "api/config/index.js": { "memory": 128 },
     "api/proxy.js": { "memory": 128 },
-    "api/fetch-page.js": { "memory": 128 }
+    "api/fetch-page.js": { "memory": 128 },
+    "api/parse-doc.js": { "memory": 256 }
   }
 }

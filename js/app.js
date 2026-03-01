@@ -320,7 +320,7 @@
       .catch(function () {
         uploadProgress.classList.remove('show');
         uploadBar.style.width = '0%';
-        toast('请求解析服务失败，请确认后端已启动（如 server.py）');
+        toast('解析服务不可用：本地请运行 server.py，线上请确认已部署 api/parse-doc 并执行 npm install');
       });
   }
 

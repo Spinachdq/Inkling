@@ -12,7 +12,8 @@ git status
 
 确认以下内容**已提交并推送**（在 GitHub 上能看到）：
 
-- 文件夹 **`api/`**（内有 `config.js`、`proxy.js`、`fetch-page.js`）
+- 文件夹 **`api/`**（内有 `config.js`、`proxy.js`、`fetch-page.js`、**`parse-doc.js`** 文上传解析）
+- 项目根目录 **`package.json`**（文上传依赖：formidable、pdf-parse、mammoth）
 - 文件 **`js/ai-service.js`**（会请求 `/api/config` 的版本）
 
 若没有，执行：
@@ -58,7 +59,22 @@ git push origin main
 
 ---
 
-## 4. 仍不行时
+## 4. 文上传无法解析（提示「请确认后端已启动」）
+
+线上没有跑 `server.py`，文上传依赖 **Vercel 的 serverless 接口** `/api/parse-doc`。请确认：
+
+1. **已提交并推送**：
+   - `api/parse-doc.js`
+   - 根目录 `package.json`（含 `formidable`、`pdf-parse`、`mammoth`）
+   - `vercel.json` 的 `functions` 里包含 `"api/parse-doc.js": { "memory": 256 }`
+
+2. **部署时会安装依赖**：Vercel 在 build 时若发现根目录有 `package.json` 会执行 `npm install`，无需本地先装。
+
+3. 若文上传仍失败：在浏览器 **Network** 里看上传文件后是否请求了 **`parse-doc`**，状态码是 200 还是 404/500。404 表示未部署到该接口，500 多为依赖未安装或解析报错，可到 Vercel **Deployments → 最新部署 → Function Logs** 查看。
+
+---
+
+## 5. 仍不行时
 
 - 在 Vercel 的 **Deployments** 里点进**最新一次**部署，看 **Build Logs** 是否有报错。
 - 确认 **Root Directory** 为项目根目录（一般为 `./` 或留空），不要指向子目录，否则可能漏掉 `api/`。
