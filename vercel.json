@@ -1,12 +1,5 @@
 {
   "buildCommand": null,
   "outputDirectory": ".",
-  "framework": null,
-  "functions": {
-    "api/config.js": {},
-    "api/config/index.js": {},
-    "api/proxy.js": {},
-    "api/fetch-page.js": {},
-    "api/parse-doc.js": {}
-  }
+  "framework": null
 }
