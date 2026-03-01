@@ -12,14 +12,18 @@ function sendError(res, statusCode, message) {
   res.status(statusCode).end(JSON.stringify({ error: message, text: '' }));
 }
 
-// 启动时加载依赖，缺失时立刻报错便于排查
+// 启动时加载依赖；Vercel 等 serverless 环境优先用 formidable-serverless 才能正确解析 multipart
 let formidable;
 let pdfParse;
 let mammoth;
 try {
-  formidable = require('formidable');
+  formidable = require('formidable-serverless');
 } catch (e) {
-  console.error('[parse-doc] formidable 加载失败:', e.message);
+  try {
+    formidable = require('formidable');
+  } catch (e2) {
+    console.error('[parse-doc] formidable 加载失败:', e2.message);
+  }
 }
 try {
   pdfParse = require('pdf-parse');
@@ -117,11 +121,11 @@ module.exports = async function (req, res) {
               }
             }
           }
-          if (!file || (!file.filepath && !file.path)) {
-            sendError(res, 200, '未收到文件，请用字段名 file 上传');
-            resolve();
-            return;
-          }
+        if (!file || (!file.filepath && !file.path)) {
+          sendError(res, 200, '未收到文件，请用字段名 file 上传（前端需 FormData 的 key 为 file）');
+          resolve();
+          return;
+        }
           const filepath = file.filepath != null ? file.filepath : file.path;
           const filename = (file.originalFilename || file.name || 'document').replace(/\s/g, '_');
           let buffer;
