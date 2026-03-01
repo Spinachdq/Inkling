@@ -2,6 +2,19 @@
 const https = require('https');
 const http = require('http');
 
+/** Vercel 上有时 req.body 未注入，需从流读取 */
+function readBody(req) {
+  if (req.body !== undefined && req.body !== null) {
+    return Promise.resolve(typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+  }
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (ch) => { data += ch; });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
+  });
+}
+
 function request(urlStr, options, body) {
   return new Promise((resolve, reject) => {
     const u = new URL(urlStr);
@@ -46,9 +59,11 @@ module.exports = async function (req, res) {
   }
   let body;
   try {
-    body = typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
+    const raw = await readBody(req);
+    body = typeof raw === 'string' ? (raw ? JSON.parse(raw) : {}) : raw;
+    if (!body || typeof body !== 'object') body = {};
   } catch (e) {
-    res.status(400).json({ error: 'Invalid JSON' });
+    res.status(400).json({ error: 'Invalid JSON: ' + (e.message || '') });
     return;
   }
   const targetUrl = body.url;
@@ -61,7 +76,7 @@ module.exports = async function (req, res) {
   }
 
   // 服务端注入 Key：若前端未传 Authorization，则从环境变量补全
-  if (!headers.Authorization || !headers['Authorization']) {
+  if (!headers.Authorization && !headers['Authorization']) {
     if (targetUrl.includes('api.openai.com') && process.env.OPENAI_API_KEY) {
       headers = { ...headers, Authorization: 'Bearer ' + process.env.OPENAI_API_KEY };
     } else if (targetUrl.includes('dashscope.aliyuncs.com') && process.env.DASHSCOPE_API_KEY) {
@@ -75,6 +90,8 @@ module.exports = async function (req, res) {
     const result = await request(targetUrl, { method: 'POST', headers }, data);
     res.status(200).json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message || 'Proxy request failed' });
+    const msg = err.message || 'Proxy request failed';
+    console.error('[proxy]', msg);
+    res.status(200).json({ error: msg });
   }
 };
