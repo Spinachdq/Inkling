@@ -3,10 +3,10 @@
   "outputDirectory": ".",
   "framework": null,
   "functions": {
-    "api/config.js": { "memory": 128 },
-    "api/config/index.js": { "memory": 128 },
-    "api/proxy.js": { "memory": 128 },
-    "api/fetch-page.js": { "memory": 128 },
-    "api/parse-doc.js": { "memory": 256 }
+    "api/config.js": {},
+    "api/config/index.js": {},
+    "api/proxy.js": {},
+    "api/fetch-page.js": {},
+    "api/parse-doc.js": {}
   }
 }

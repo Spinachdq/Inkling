@@ -97,7 +97,7 @@ module.exports = async function (req, res) {
       return;
     }
 
-    const form = formidable.IncomingForm({ maxFileSize: 15 * 1024 * 1024 });
+    const form = new formidable.IncomingForm({ maxFileSize: 15 * 1024 * 1024 });
     await new Promise((resolve, reject) => {
       form.parse(req, async (err, fields, files) => {
         try {
