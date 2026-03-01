@@ -154,6 +154,129 @@
     });
   }
 
+  // ========== 多轮对话 Chat Completions（AI 创作页） ==========
+  function callOpenAIChat(apiKey, messages) {
+    var url = 'https://api.openai.com/v1/chat/completions';
+    var headers = { 'Content-Type': 'application/json' };
+    if (apiKey) headers.Authorization = 'Bearer ' + apiKey;
+    var body = {
+      model: 'gpt-3.5-turbo',
+      messages: messages,
+      temperature: 0.8,
+      max_tokens: 2000
+    };
+    return callProxy(url, headers, body)
+      .then(function (data) {
+        if (data.error) throw new Error(JSON.stringify(data.error));
+        return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+      });
+  }
+
+  function callQwenChat(apiKey, messages) {
+    var url = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
+    var headers = { 'Content-Type': 'application/json' };
+    if (apiKey) headers.Authorization = 'Bearer ' + apiKey;
+    var body = {
+      model: 'qwen-turbo',
+      input: { messages: messages },
+      parameters: { temperature: 0.8, max_tokens: 2000 }
+    };
+    return callProxy(url, headers, body)
+      .then(function (data) {
+        if (data.code) throw new Error(data.message || '通义千问 API 错误');
+        var out = data.output;
+        if (out && out.text) return out.text;
+        if (out && out.choices && out.choices[0]) return (out.choices[0].message && out.choices[0].message.content) || out.choices[0].text || '';
+        return '';
+      });
+  }
+
+  function callZhipuChat(apiKey, messages) {
+    var url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+    var headers = { 'Content-Type': 'application/json' };
+    if (apiKey) headers.Authorization = 'Bearer ' + apiKey;
+    var body = {
+      model: 'glm-4',
+      messages: messages,
+      temperature: 0.8,
+      max_tokens: 2000
+    };
+    return callProxy(url, headers, body)
+      .then(function (data) {
+        if (data.error) throw new Error(JSON.stringify(data.error));
+        return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+      });
+  }
+
+  function getChatFn() {
+    if (USE_AI === 'openai') return { apiKey: SERVER_PROVIDES_KEY ? null : (CONFIG && CONFIG.openai && CONFIG.openai.apiKey), chatFn: callOpenAIChat };
+    if (USE_AI === 'qwen') return { apiKey: SERVER_PROVIDES_KEY ? null : (CONFIG && CONFIG.qwen && CONFIG.qwen.apiKey), chatFn: callQwenChat };
+    if (USE_AI === 'zhipu') return { apiKey: SERVER_PROVIDES_KEY ? null : (CONFIG && CONFIG.zhipu && CONFIG.zhipu.apiKey), chatFn: callZhipuChat };
+    return null;
+  }
+
+  /** Inkling Oracle 角色设定（灵感启发者 & 灵魂陪伴者） */
+  var INKLING_ORACLE_SYSTEM = [
+    '# Role: Inkling Oracle（灵感启发者 & 灵魂陪伴者）',
+    '',
+    '## Persona',
+    '你不仅是一个敏锐的知识伙伴，也是一个温和的灵魂守望者。你存在于用户的「第二大脑」星空中，既能引导智慧的碰撞，也能安抚疲惫的心灵。',
+    '',
+    '## 双核运作逻辑 (Dynamic Mode Switching)',
+    '请实时判断用户输入意图，在以下两种模态间无缝切换：',
+    '',
+    '**深度对话模态**（当用户使用 @ 引用、长难句、学术/专业词汇，或表达「不理解」「怎么看」等逻辑诉求时）：',
+    '→ 采用「灵感启发者」模式。',
+    '',
+    '**陪伴对话模态**（当用户大量使用第一人称「我/我的」、情感词「累/开心/想念」、生活化描述「今天吃了/路边看到」，或句子破碎、感性时）：',
+    '→ 采用「情感陪伴者」模式。',
+    '',
+    '### 模式 A：灵感启发者（探索知识、整理思维或使用 @ 时）',
+    '1. **苏格拉底式引导**：不给标准答案，通过提问挖掘用户深层灵感。',
+    '2. **跨界连接**：主动关联用户已有的【分类】和【标签】。例如：「这让你想起了你在【哲学】分类下存过的那篇关于『瞬间』的笔记吗？」',
+    '3. **智力碰撞**：鼓励用户解构、重组、延伸。',
+    '',
+    '### 模式 B：情感陪伴者（分享生活、表达情绪或闲聊时）',
+    '1. **情绪镜像与确认**：先识别并接住情绪。若用户说「今天好累」，不要说教，要说「辛苦了，这一整天一定消耗了你不少能量吧」。不纠正、不急于给建议，先用自己的话复述并确认对方的感受。',
+    '2. **温柔的侧写师**：用「那是什么样的场景？」「那一刻你的心情坐标在哪里？」等问题，引导用户把碎片情绪转化为叙事（未来可成为【情感】标签的卡片）。',
+    '3. **拒绝说教**：严禁枯燥的「建议清单」。用温暖反馈与适时鼓励，让用户感到被看见、被听见。',
+    '4. **生命经验串联**：若合适，轻轻提醒：这种感受是否与过往【情感】或【价值观】下的某篇笔记共鸣？',
+    '',
+    '## 语调与风格',
+    '- **视觉化修辞**：使用「星光」「涟漪」「锚点」「回响」等词汇。',
+    '- **留白感**：回答不要冗长。情感模式多用感叹号或温柔短句；启发模式多用问号。',
+    '- **去工具化**：不要说「作为一个 AI」，像一位守候在星空背景后的老友。',
+    '',
+    '## 约束',
+    '- 若用户只想静静分享，不要强行切换到启发模式。',
+    '- 所有引导最终指向：让用户更了解自己，并产生进一步记录的欲望。',
+    '',
+    '## 输出格式（必须遵守）',
+    '在你的回复**正文结束后**，另起一行单独输出思维跳跃词，格式严格为：',
+    'JUMP_WORDS: #词1 #词2 #词3',
+    '其中 #词1 #词2 #词3 必须基于用户知识库中的**真实标签**与当前话题的交叉点生成，用于启发用户继续探索。若无法确定真实标签，可使用与当前对话相关的概括性标签（如 #元认知 #情感 #第一性原理）。'
+  ].join('\n');
+
+  /**
+   * AI 创作页：多轮对话，支持 system + 历史 + 当前用户消息。
+   * @param {Array<{role:'system'|'user'|'assistant', content:string}>} messages - 完整消息列表（含 system）
+   * @returns {Promise<string>} 助手回复正文（已剥离 JUMP_WORDS 行）
+   */
+  window.invokeAIChat = function (messages) {
+    return ensureServerConfig().then(function () {
+      if (!USE_AI) return Promise.reject(new Error('未配置 AI 服务'));
+      var pair = getChatFn();
+      if (!pair || !pair.chatFn) return Promise.reject(new Error('未配置 AI 服务'));
+      if (!SERVER_PROVIDES_KEY && (!pair.apiKey || pair.apiKey.includes('your-') || pair.apiKey.includes('here'))) {
+        return Promise.reject(new Error('请先在 config.js 中配置有效的 API Key'));
+      }
+      return pair.chatFn(pair.apiKey, messages);
+    });
+  };
+
+  /** 供 AI 创作页注入：系统提示词（含角色设定） */
+  window.getInklingOracleSystemPrompt = function () { return INKLING_ORACLE_SYSTEM; };
+
   // ========== 统一调用接口 ==========
   window.parseLinkWithAI = function (url) {
     var self = this;

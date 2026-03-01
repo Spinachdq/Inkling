@@ -4,35 +4,94 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI创作 — 碎片化内容整理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✒</text></svg>" type="image/svg+xml">
 </head>
-<body>
-  <main class="page-ai">
-    <header class="ai-header">
-      <a href="index.html" class="back" title="返回">←</a>
-      <h1>AI 创作</h1>
-    </header>
+<body class="page-ai-body">
+  <div class="page-ai-blurs" aria-hidden="true"></div>
 
-    <div class="ai-layout">
-      <aside class="ai-sidebar">
-        <button type="button" class="new-chat">+ 新对话</button>
-        <div id="historyList"></div>
-      </aside>
-
-      <section class="ai-chat">
-        <div class="ai-messages" id="aiMessages"></div>
-        <div class="ai-input-wrap">
-          <textarea id="aiInput" placeholder="请输入你的问题或需求…"></textarea>
-          <div class="send-row">
-            <button type="button" class="send-btn" id="sendBtn">发送</button>
-          </div>
-        </div>
-      </section>
+  <header class="ai-chat-header">
+    <a href="index.html" class="ai-chat-back" title="返回">←</a>
+    <div class="ai-chat-title-wrap">
+      <span class="ai-chat-title-icon" aria-hidden="true">✨</span>
+      <h1 class="ai-chat-title">AI 创作</h1>
     </div>
-  </main>
+    <span class="ai-chat-header-spacer"></span>
+  </header>
+
+  <div class="ai-chat-body">
+    <!-- 左侧：知识锚点（有 @ 引用时展示） -->
+    <aside class="ai-anchor-wrap hidden" id="aiAnchorWrap">
+      <div class="ai-anchor-header">
+        <span class="ai-anchor-label">知识锚点</span>
+        <button type="button" class="ai-sidebar-toggle" id="aiAnchorClose" title="收起">‹</button>
+      </div>
+      <div class="ai-anchor-list" id="aiAnchorList"></div>
+    </aside>
+    <button type="button" class="ai-sidebar-edge ai-sidebar-edge-left" id="aiAnchorOpen" title="展开知识锚点" style="display:none">›</button>
+
+    <!-- 中间：对话流 -->
+    <main class="ai-chat-main">
+      <div class="ai-chat-scroll" id="aiChatScroll">
+        <div class="ai-chat-inner" id="aiChatInner"></div>
+        <div class="ai-chat-end" id="aiChatEnd"></div>
+      </div>
+
+      <!-- 输入区：@ 弹窗 + 已选引用 + 输入框 -->
+      <div class="ai-input-area">
+        <div class="ai-mention-popup" id="aiMentionPopup">
+          <p class="ai-mention-title">引用知识卡片</p>
+          <div class="ai-mention-list" id="aiMentionList"></div>
+          <p class="ai-mention-empty" id="aiMentionEmpty">没有找到匹配的卡片</p>
+        </div>
+        <div class="ai-selected-mentions" id="aiSelectedMentions"></div>
+        <div class="ai-input-row">
+          <textarea id="aiInput" class="ai-input-field" rows="1" placeholder="输入 @ 引用卡片，开始对话…"></textarea>
+          <button type="button" class="ai-send-btn" id="aiSendBtn" title="发送">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- 右侧：思维延展（动态标签云） -->
+    <aside class="ai-tags-wrap" id="aiTagsWrap">
+      <div class="ai-tags-header">
+        <span class="ai-tags-label">思维延展</span>
+        <button type="button" class="ai-sidebar-toggle" id="aiTagsClose" title="收起">‹</button>
+      </div>
+      <div class="ai-tags-scroll">
+        <div class="ai-tags-section" id="aiTagsRelevant">
+          <p class="ai-tags-section-title">对话相关</p>
+          <div class="ai-tags-cloud" id="aiTagsRelevantList"></div>
+        </div>
+        <div class="ai-tags-section" id="aiTagsCategories">
+          <p class="ai-tags-section-title">分类</p>
+          <div class="ai-tags-cloud" id="aiTagsCategoriesList"></div>
+        </div>
+        <div class="ai-tags-section" id="aiTagsMore">
+          <p class="ai-tags-section-title">更多标签</p>
+          <div class="ai-tags-cloud" id="aiTagsMoreList"></div>
+        </div>
+      </div>
+    </aside>
+    <button type="button" class="ai-sidebar-edge ai-sidebar-edge-right" id="aiTagsOpen" title="展开思维延展" style="display:none">‹</button>
+  </div>
+
+  <!-- 卡片快速预览浮层 -->
+  <div class="ai-preview-overlay" id="aiPreviewOverlay">
+    <div class="ai-preview-card" id="aiPreviewCard"></div>
+  </div>
 
   <div class="toast" id="toast"></div>
 
+  <script src="config.js"></script>
+  <script src="js/categories.js"></script>
+  <script src="js/ai-service.js"></script>
   <script src="js/ai.js"></script>
 </body>
 </html>
