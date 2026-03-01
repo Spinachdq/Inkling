@@ -49,6 +49,7 @@
     '- 拒绝废话，直接输出提炼后的精华。',
     '- 不同主题段落之间保持双倍空行，增强呼吸感。',
     '- **再次强调**：表格总占比 ≤40%，不要所有信息都用表格；多数内容用段落和列表。',
+    '- **禁止**：不要使用「核心观点」四个字作为标题或前缀；总结句直接写内容，不要加「核心观点：」或「核心观点:」。',
     '',
     '请对以下正文按上述逻辑进行结构化提炼并输出。',
     '',
@@ -240,20 +241,84 @@
     });
   };
 
-  /** 卡片核心信息（金句）：10-30 字，用于首页卡片中心展示 */
+  /**
+   * 判断是否为乱码：非中英文字符占比过高，或有效内容过短。
+   * 用于金句兜底时决定是否降级到下一级。
+   */
+  function isGarbled(s) {
+    if (!s || typeof s !== 'string') return true;
+    var t = s.trim();
+    if (t.length < 2) return true;
+    var validCount = (t.match(/[\u4e00-\u9fff\u3400-\u4dbfa-zA-Z]/g) || []).length;
+    return validCount < Math.min(3, Math.ceil(t.length * 0.5));
+  }
+
+  /**
+   * 卡片核心信息（金句）多级兜底：
+   * 第一级：金句提炼（从全文找最具代表性的感性/理性话语）
+   * 第二级：摘要重写（若金句为乱码，则用 AI 总结核心观点）
+   * 第三级：3 个关键词组合成「关于 [关键词] 的思考」
+   * 第四级：正文前 20 字 + ...
+   */
   window.generateCoreInsight = function (text) {
+    var rawText = (text || '').trim();
+    var plainForFallback = rawText.replace(/\s+/g, ' ').trim();
+    var first20 = plainForFallback.slice(0, 20) + (plainForFallback.length > 20 ? '...' : '');
+
+    /** 优先在第一个句号处截断，避免出现第二句残留（如 "Sav..."）；若无句号再按 30 字截断 */
+    function normalizeLevel1(s) {
+      s = (s || '').trim().replace(/^["「『"]|["」』"]$/g, '');
+      var sentEnd = s.search(/[。！？.!?]/);
+      if (sentEnd !== -1 && sentEnd < 60) {
+        s = s.slice(0, sentEnd + 1);
+      } else if (s.length > 30) {
+        s = s.slice(0, 30) + '…';
+      }
+      return s;
+    }
+
     return ensureServerConfig().then(function () {
       if (!USE_AI) return Promise.reject(new Error('未配置 AI 服务'));
       var pair = getApiKeyAndCallFn();
       if (!pair) return Promise.reject(new Error('未配置 AI 服务'));
-      var prompt = '请用 10-30 字提炼以下内容的核心信息，用于卡片展示。' +
+
+      // 第一级：金句提炼
+      var prompt1 = '请用 10-30 字提炼以下内容的核心信息，用于卡片展示。' +
+        '从全文中找出一句最具代表性的感性或理性话语。' +
         '若为观点分享型：提炼最具代表性的单一核心观点；若为情感记录型：提炼最深刻的心情或核心事件。' +
-        '直接输出一句金句，不要标点堆砌，不要引号。\n\n' + text.slice(0, 2000);
-      return pair.callFn(pair.apiKey, prompt).then(function (s) {
-        s = (s || '').trim().replace(/^["「『"]|["」』"]$/g, '');
-        if (s.length > 30) s = s.slice(0, 30) + '…';
-        return s;
-      });
+        '直接输出一句金句，不要标点堆砌，不要引号。\n\n' + rawText.slice(0, 2000);
+
+      return pair.callFn(pair.apiKey, prompt1)
+        .then(function (s) {
+          s = normalizeLevel1(s);
+          if (s && !isGarbled(s)) return s;
+          throw new Error('GARBLED_OR_EMPTY');
+        })
+        .catch(function (err) {
+          if (err && err.message === 'GARBLED_OR_EMPTY') throw err;
+          // 第二级：摘要重写
+          var prompt2 = '请用自己的话，用一句话（10-30 字）总结以下这段话的核心观点。不要直接引用原文，只输出总结句，不要引号。\n\n' + rawText.slice(0, 2000);
+          return pair.callFn(pair.apiKey, prompt2).then(function (s) {
+            s = normalizeLevel1(s);
+            if (s && !isGarbled(s)) return s;
+            throw new Error('GARBLED_OR_EMPTY');
+          });
+        })
+        .catch(function (err) {
+          if (err && err.message === 'GARBLED_OR_EMPTY') throw err;
+          // 第三级：3 个关键词
+          var prompt3 = '请从以下内容中提取恰好 3 个关键词，用顿号分隔，只输出这 3 个词，不要其他文字、不要编号、不要引号。\n\n' + rawText.slice(0, 2000);
+          return pair.callFn(pair.apiKey, prompt3).then(function (s) {
+            s = (s || '').trim().replace(/^["「『"]|["」』"]$/g, '').replace(/\s+/g, '、');
+            var keywords = s ? s.split(/[、,，\s]+/).filter(Boolean).slice(0, 3).join('、') : '';
+            if (keywords && !isGarbled(keywords)) return '关于 ' + keywords + ' 的思考';
+            throw new Error('GARBLED_OR_EMPTY');
+          });
+        })
+        .catch(function () {
+          // 第四级：文本截取
+          return first20 || '无标题';
+        });
     });
   };
 

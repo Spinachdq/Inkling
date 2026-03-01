@@ -1406,17 +1406,22 @@ body .page-edit { margin: 0; }
   box-shadow: 0 2px 10px hsl(var(--ink) / 0.1);
   background: hsl(var(--parchment) / 0.9);
 }
-.edit-source-card-title {
+.edit-source-line {
   display: block;
+  line-height: 1.4;
+  margin-bottom: 0.35rem;
+  word-break: break-word;
+}
+.edit-source-prefix,
+.edit-source-card-title {
+  display: inline;
   font-family: 'Noto Serif SC', 'Noto Sans SC', sans-serif;
   font-size: 1.125rem;
   font-weight: 700;
   color: hsl(var(--ink));
-  line-height: 1.4;
-  margin-bottom: 0.35rem;
   transition: color 0.2s;
-  word-break: break-word;
 }
+.edit-source-card:hover .edit-source-prefix,
 .edit-source-card:hover .edit-source-card-title {
   color: hsl(var(--terracotta));
 }
@@ -1431,6 +1436,7 @@ body .page-edit { margin: 0; }
 }
 .edit-source-card-plain { cursor: default; pointer-events: none; }
 .edit-source-card-plain:hover { border-color: inherit; box-shadow: inherit; background: inherit; }
+.edit-source-card-plain .edit-source-prefix:hover,
 .edit-source-card-plain .edit-source-card-title:hover { color: inherit; }
 .edit-source-card-plain .edit-source-card-hint:hover { color: inherit; }
 

@@ -119,7 +119,7 @@
           linkEl.setAttribute('data-source-type', (note.sourceType || 'link'));
           linkEl.setAttribute('data-source-url', note.sourceUrl);
           linkEl.setAttribute('data-source-title', displayText);
-          linkEl.title = note.sourceType === 'file' ? '点击预览原文件' : '点击查看原文';
+          linkEl.title = note.sourceType === 'file' ? '' : '点击查看原文';
           linkEl.style.pointerEvents = '';
           linkEl.classList.remove('edit-source-card-plain');
         } else {
@@ -147,7 +147,7 @@
         linkEl.setAttribute('data-source-type', sourceTypeFromParams);
         linkEl.setAttribute('data-source-url', sourceUrlFromParams);
         linkEl.setAttribute('data-source-title', sourceTitleFromParams);
-        linkEl.title = sourceTypeFromParams === 'file' ? '点击预览原文件' : '点击查看原文';
+        linkEl.title = sourceTypeFromParams === 'file' ? '' : '点击查看原文';
         linkEl.style.pointerEvents = '';
       } else {
         linkEl.removeAttribute('href');
@@ -723,7 +723,7 @@
 
     if (saveBtn) saveBtn.disabled = true;
     if (saveBtnLabel) saveBtnLabel.textContent = '保存中…';
-    toast('正在生成金句与标签…');
+    toast('正在保存...');
 
     var hasAi = typeof window.generateCoreInsight === 'function' && typeof window.generateTagsAndParentCategory === 'function' && text && text.length >= 10;
     if (hasAi) {

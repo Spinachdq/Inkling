@@ -173,6 +173,7 @@
         window.parseLinkWithAI(url)
           .then(function (result) {
             var summary = (result && typeof result === 'object' && result.summary) ? result.summary : (typeof result === 'string' ? result : '');
+            summary = stripCoreLabel(summary);
             var sourceTitle = (result && typeof result === 'object' && result.title) ? String(result.title).trim() : '';
             var body = '【AI 解析结果】\n\n' + summary + '\n\n---\n\n你可以在下方补充自己的感悟，或使用「AI 生成大纲」「AI 提炼核心」进行进一步加工。';
             var goldenPromise = (typeof window.generateCoreInsight === 'function' && summary && summary.length > 20)
@@ -212,6 +213,15 @@
   }
   if (cancelLink) cancelLink.addEventListener('click', function () { modalLink.classList.remove('open'); });
   if (modalLink) modalLink.addEventListener('click', function (e) { if (e.target === modalLink) modalLink.classList.remove('open'); });
+
+  /** 去掉结构化总结中的「核心观点」标题/前缀，只保留观点句子 */
+  function stripCoreLabel(str) {
+    if (!str || typeof str !== 'string') return str;
+    return str
+      .replace(/^#*\s*核心观点\s*[：:]\s*/gm, '')
+      .replace(/^#*\s*核心观点\s*$/gm, '')
+      .replace(/\n{3,}/g, '\n\n');
+  }
 
   // ——— 文上传：拖拽与选择（模拟提取） ———
   var modalDoc = document.getElementById('modalDoc');
@@ -301,12 +311,16 @@
         }
         var fileName = file.name || '文档';
         var firstLine = text.trim().split('\n')[0].trim().slice(0, 80) || fileName;
-        function doFinish(aiText, fileUrl, category, tags) {
-          var opts = { sourceTitle: fileName, sourceType: 'file', title: firstLine };
+        function doFinish(aiText, fileUrl, category, tags, titleOverride) {
+          var opts = { sourceTitle: fileName, sourceType: 'file', title: (titleOverride && titleOverride.trim()) || firstLine };
           if (fileUrl) opts.sourceUrl = fileUrl;
           if (category) opts.category = category;
           if (tags && tags.length) opts.tags = tags.slice(0, 3);
           finishUpload(aiText, opts);
+        }
+        function resolveTitle(bodyForTitle) {
+          if (typeof window.generateCoreInsight !== 'function' || !bodyForTitle || bodyForTitle.length < 10) return Promise.resolve(firstLine);
+          return window.generateCoreInsight(bodyForTitle).catch(function () { return firstLine; });
         }
         uploadBar.style.width = '70%';
         var fileUrlPromise = uploadDocToSupabase(file);
@@ -320,10 +334,15 @@
           var tags = Array.isArray(catResult.tags) ? catResult.tags.slice(0, 3) : [];
           if (typeof window.structureContentWithAI === 'function' && text.length >= 50) {
             window.structureContentWithAI(text)
-              .then(function (aiText) { doFinish(aiText, fileUrl, category, tags); })
-              .catch(function () { doFinish(text, fileUrl, category, tags); });
+              .then(function (aiText) {
+                aiText = stripCoreLabel(aiText);
+                return resolveTitle(aiText).then(function (titleToUse) { doFinish(aiText, fileUrl, category, tags, titleToUse); });
+              })
+              .catch(function () {
+                return resolveTitle(text).then(function (titleToUse) { doFinish(text, fileUrl, category, tags, titleToUse); });
+              });
           } else {
-            doFinish(text, fileUrl, category, tags);
+            resolveTitle(text).then(function (titleToUse) { doFinish(text, fileUrl, category, tags, titleToUse); });
           }
         });
       })
@@ -363,6 +382,8 @@
   var cardsEmpty = document.getElementById('cardsEmpty');
   sortBtns.forEach(function (b) {
     b.addEventListener('click', function () {
+      /* 星图视图下排序方式不生效，点击无反应 */
+      if (currentViewMode === 'graph') return;
       var newMode = b.getAttribute('data-sort') || 'random';
       /* 再次点击随机展示：清空已存顺序与 seed，使本次渲染重新洗牌并允许颜色变化 */
       if (newMode === 'random' && viewMode === 'random') {
@@ -402,6 +423,11 @@
     viewToggleBtns.forEach(function (btn) {
       var v = btn.getAttribute('data-view');
       btn.classList.toggle('active', v === mode);
+    });
+    /* 星图视图下不展示排序按钮的“被点击”状态；卡片视图下恢复与 viewMode 对应的 active */
+    sortBtns.forEach(function (b) {
+      var sort = b.getAttribute('data-sort');
+      b.classList.toggle('active', mode === 'card' && sort === viewMode);
     });
     if (cardsView) cardsView.style.display = mode === 'card' ? '' : 'none';
     if (constellationWrap) constellationWrap.style.display = mode === 'graph' ? 'block' : 'none';
