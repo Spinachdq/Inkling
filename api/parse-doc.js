@@ -1,12 +1,36 @@
-// 文上传：解析 TXT / PDF / DOCX，与 server.py 行为一致，供线上部署（如 Vercel）使用
+// 文上传：解析 TXT / PDF / DOCX，供线上部署（如 Vercel）使用
 const fs = require('fs');
-const path = require('path');
 
 function setCors(res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function sendError(res, statusCode, message) {
+  res.status(statusCode).end(JSON.stringify({ error: message, text: '' }));
+}
+
+// 启动时加载依赖，缺失时立刻报错便于排查
+let formidable;
+let pdfParse;
+let mammoth;
+try {
+  formidable = require('formidable');
+} catch (e) {
+  console.error('[parse-doc] formidable 加载失败:', e.message);
+}
+try {
+  pdfParse = require('pdf-parse');
+  if (pdfParse && typeof pdfParse.default === 'function') pdfParse = pdfParse.default;
+} catch (e) {
+  console.error('[parse-doc] pdf-parse 加载失败:', e.message);
+}
+try {
+  mammoth = require('mammoth');
+} catch (e) {
+  console.error('[parse-doc] mammoth 加载失败:', e.message);
 }
 
 function parseTxt(buffer) {
@@ -22,25 +46,17 @@ function parseTxt(buffer) {
 }
 
 function parsePdf(buffer) {
-  try {
-    const pdf = require('pdf-parse');
-    return pdf(buffer).then((data) => (data && data.text) ? data.text : '');
-  } catch (e) {
-    return Promise.reject(new Error('未安装 pdf-parse，请执行: npm install pdf-parse'));
+  if (!pdfParse || typeof pdfParse !== 'function') {
+    return Promise.reject(new Error('pdf-parse 未安装或加载失败，请执行 npm install pdf-parse'));
   }
+  return pdfParse(buffer).then((data) => (data && data.text) ? data.text : '');
 }
 
 function parseDocx(buffer) {
-  return new Promise((resolve, reject) => {
-    try {
-      const mammoth = require('mammoth');
-      mammoth.extractRawText({ buffer }).then((result) => {
-        resolve(result.value || '');
-      }).catch(reject);
-    } catch (e) {
-      reject(new Error('未安装 mammoth，请执行: npm install mammoth'));
-    }
-  });
+  if (!mammoth || !mammoth.extractRawText) {
+    return Promise.reject(new Error('mammoth 未安装或加载失败，请执行 npm install mammoth'));
+  }
+  return mammoth.extractRawText({ buffer }).then((result) => result.value || '');
 }
 
 function parseDocFile(buffer, filename) {
@@ -61,65 +77,76 @@ function parseDocFile(buffer, filename) {
 }
 
 module.exports = async function (req, res) {
-  setCors(res);
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-  if (req.method !== 'POST') {
-    res.status(405).end(JSON.stringify({ error: '请使用 POST 上传文件' }));
-    return;
-  }
-  const contentType = (req.headers['content-type'] || '');
-  if (!contentType.includes('multipart/form-data')) {
-    res.status(400).end(JSON.stringify({ error: '请使用 multipart/form-data 上传文件' }));
-    return;
-  }
-
-  let formidable;
   try {
-    formidable = require('formidable');
-  } catch (e) {
-    res.status(500).end(JSON.stringify({ error: '服务未安装 formidable，请执行: npm install formidable' }));
-    return;
-  }
+    setCors(res);
+    if (req.method === 'OPTIONS') {
+      res.status(200).end();
+      return;
+    }
+    if (req.method !== 'POST') {
+      sendError(res, 405, '请使用 POST 上传文件');
+      return;
+    }
+    const contentType = (req.headers['content-type'] || '');
+    if (!contentType.includes('multipart/form-data')) {
+      sendError(res, 400, '请使用 multipart/form-data 上传文件');
+      return;
+    }
+    if (!formidable) {
+      sendError(res, 500, 'formidable 未安装或加载失败，请在项目根目录执行 npm install');
+      return;
+    }
 
-  const form = formidable.IncomingForm({ maxFileSize: 15 * 1024 * 1024 });
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      res.status(200).end(JSON.stringify({ error: '解析请求失败: ' + (err.message || String(err)), text: '' }));
-      return;
-    }
-    let file = files.file;
-    if (!file && files && typeof files === 'object') {
-      const keys = Object.keys(files);
-      for (let i = 0; i < keys.length; i++) {
-        const f = files[keys[i]];
-        if (f && (f.filepath || f.path)) {
-          file = Array.isArray(f) ? f[0] : f;
-          break;
+    const form = formidable.IncomingForm({ maxFileSize: 15 * 1024 * 1024 });
+    await new Promise((resolve, reject) => {
+      form.parse(req, async (err, fields, files) => {
+        try {
+          if (err) {
+            sendError(res, 200, '解析请求失败: ' + (err.message || String(err)));
+            resolve();
+            return;
+          }
+          let file = files && files.file;
+          if (!file && files && typeof files === 'object') {
+            const keys = Object.keys(files);
+            for (let i = 0; i < keys.length; i++) {
+              const f = files[keys[i]];
+              if (f && (f.filepath || f.path)) {
+                file = Array.isArray(f) ? f[0] : f;
+                break;
+              }
+            }
+          }
+          if (!file || (!file.filepath && !file.path)) {
+            sendError(res, 200, '未收到文件，请用字段名 file 上传');
+            resolve();
+            return;
+          }
+          const filepath = file.filepath != null ? file.filepath : file.path;
+          const filename = (file.originalFilename || file.name || 'document').replace(/\s/g, '_');
+          let buffer;
+          try {
+            buffer = fs.readFileSync(filepath);
+          } catch (e) {
+            sendError(res, 200, '读取文件失败: ' + (e.message || ''));
+            resolve();
+            return;
+          }
+          const text = await parseDocFile(buffer, filename);
+          const out = text ? text.slice(0, 50000) : '';
+          res.status(200).end(JSON.stringify({ text: out, filename: filename }));
+        } catch (e) {
+          const msg = (e && e.message) || String(e);
+          console.error('[parse-doc] 解析异常:', msg);
+          res.status(200).end(JSON.stringify({ error: msg, text: '' }));
         }
-      }
-    }
-    if (!file || (!file.filepath && !file.path)) {
-      res.status(200).end(JSON.stringify({ error: '未收到文件，请用字段名 file 上传', text: '' }));
-      return;
-    }
-    const filepath = file.filepath != null ? file.filepath : file.path;
-    const filename = (file.originalFilename || file.name || 'document').replace(/\s/g, '_');
-    let buffer;
-    try {
-      buffer = fs.readFileSync(filepath);
-    } catch (e) {
-      res.status(200).end(JSON.stringify({ error: '读取文件失败', text: '' }));
-      return;
-    }
-    try {
-      const text = await parseDocFile(buffer, filename);
-      const out = text ? text.slice(0, 50000) : '';
-      res.status(200).end(JSON.stringify({ text: out, filename: filename }));
-    } catch (e) {
-      res.status(200).end(JSON.stringify({ error: (e && e.message) || String(e), text: '' }));
-    }
-  });
+        resolve();
+      });
+    });
+  } catch (e) {
+    const msg = (e && e.message) || String(e);
+    console.error('[parse-doc] 处理异常:', msg);
+    setCors(res);
+    res.status(500).end(JSON.stringify({ error: 'parse-doc 异常: ' + msg, text: '' }));
+  }
 };

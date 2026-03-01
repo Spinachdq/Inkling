@@ -273,7 +273,17 @@
     var form = new FormData();
     form.append('file', file);
     fetch('/api/parse-doc', { method: 'POST', body: form })
-      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        return res.text().then(function (text) {
+          var data = {};
+          try { data = JSON.parse(text); } catch (e) { data = { error: text || ('HTTP ' + res.status) }; }
+          if (!res.ok) {
+            var msg = (data.error && data.error.trim()) ? data.error : ('解析服务返回 ' + res.status);
+            throw new Error(msg);
+          }
+          return data;
+        });
+      })
       .then(function (data) {
         uploadBar.style.width = '50%';
         if (data.error && !data.text) {
@@ -317,10 +327,11 @@
           }
         });
       })
-      .catch(function () {
+      .catch(function (err) {
         uploadProgress.classList.remove('show');
         uploadBar.style.width = '0%';
-        toast('解析服务不可用：本地请运行 server.py，线上请确认已部署 api/parse-doc 并执行 npm install');
+        var msg = (err && err.message) ? err.message : '解析服务不可用：本地请运行 server.py，线上请确认已部署 api/parse-doc 并执行 npm install';
+        toast(msg);
       });
   }
 
